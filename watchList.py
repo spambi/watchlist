@@ -6,21 +6,19 @@ import wx
 
 
 class addShowDialog(wx.Dialog):
-    def __init__(self, parent, id, title):
+    def __init__(self, parent, id, title, watchList):
         wx.Dialog.__init__(self, parent, id, title)
 
         sizer = self.CreateTextSizer('Add Show')
 
-        #sizer.Add(wx.Button(self, -1, 'Show Name'), 0, wx.ALL, 5)
-        sizer.Add(wx.Button(self, -1, 'Add Show'), 0, wx.ALL, 5)
+        showName = wx.TextCtrl(self, style=wx.TE_RICH)
+        showNameBut = wx.Button(self, label="Add Show")
+        # Change to url TextCtrl when database implementation
+        showNameBut.Bind(wx.EVT_BUTTON,
+                         watchList.addShow(showName.GetValue(), 0))
 
-        showName = wx.TextCtrl(self, flag=wx.TE_PROCESS_ENTER | wx.TE_RICH)
-        sizer.Add(showName, 0, wx.ALL, 5)
-        #sizer.Add(wx.Button(self, -1, 'Button'), 0, wx.ALL, 5)
-        #sizer.Add(wx.Button(self, -1, 'Button'), 0, wx.ALL, 5)
-        #sizer.Add(wx.Button(self, -1, 'Button'), 0, wx.ALL | wx.ALIGN_CENTER,
-                  #5)
-        sizer.Add(wx.Button(self, -1, 'Button'), 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showName, 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showNameBut, 0, wx.ALL, 5)
 
         self.SetSizer(sizer)
 
@@ -72,7 +70,7 @@ class Watchlist(wx.Frame):
         self.SetTitle("Watchlist")
 
     def NewShow(self, e):
-        testDia = addShowDialog(None, -1, "Add Show")
+        testDia = addShowDialog(None, -1, "Add Show", self)
         testDia.ShowModal()
         testDia.CenterOnScreen()
         testDia.Destroy()
