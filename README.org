@@ -2,5 +2,6 @@
   * A simple customisable watchlist for personal use mainly
   * Will add show names and potentially interact with different databases for automatic parsing
   * Change shows manually in the config.ini file
+    
 * Requirements
   * wxPython

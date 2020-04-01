@@ -1,10 +1,10 @@
-from sys import exit
+#!/usr/bin/env python
 import configparser
 import wx
 
 # Use matrix to put together wx widget and name
 config = configparser.ConfigParser()
-exurl = 'https://horriblesubs.info/shows/nekopara/'
+showsDicts = []
 
 # Config Defaults
 config['DEFAULT'] = {'State': 'UW',  # UW | CW | DW
@@ -112,31 +112,55 @@ class Watchlist(wx.Frame):
             if dia:
                 dia.Destroy()
 
-    def checkDuplicate(self, e):
-        pass
-
-    def parseConf(self, e, confCur):
-        """Parses through the config.ini file, finding information and
-        returning it"""
-        # with open(confCur, "r") as f:
-        #    c = configparser.ConfigParser()
-        #    print(c.sections(f))
-        pass
 
     def OnQuit(self, e):
         self.Close()
 
 
+class confCtrl(configparser.ConfigParser):
+
+    fr = open('config.ini', 'r')
+    fw = open('config.ini', 'w')
+
+    def __init__(self, file, **kwargs):
+        self.read_file(file)
+
+    def checkDuplicate(self, e):
+        pass
+
+    def parseConf(self, e):
+        """Parses through the config.ini file, finding information and
+        returning it, use this for code clarity"""
+        tempDics = []
+        testDic = {'Name': '',
+                   'URL': '',
+                   'State': '',
+                   'Episode': '',
+                   'Score': ''}
+
+        with self.fr as f:
+            config.read_file(f)
+            for i in range(0, len(config.sections())):
+                tempShow = config.sections()[i]
+
+                testDic['Name'] = self.sections()[i]
+                # Access the configs num(i) section's URL/STATE/etc.
+                testDic['URL'] = self[self.sections()[i]]['URL']
+                testDic['State'] = self[self.sections()[i]]['State']
+                testDic['Episode'] = self[self.sections()[i]]['Episode']
+                testDic['Score'] = self[self.sections()[i]]['Score']
+
+                showsDicts.append(tempDics)
+
+        return tempDics
+        pass
+
+
 def main():
-    try:
-        japp = wx.App()
-        jex = Watchlist(None)
-        jex.Show()
-        japp.MainLoop()
-    except:
-        print('idk')
-        exit()
+    app = wx.App()
+    ex = Watchlist(None)
+    ex.Show()
+    app.MainLoop()
 
 
-#if __name__ == "__main__":
 main()
