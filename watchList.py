@@ -3,6 +3,14 @@ import configparser
 import wx
 
 # Use matrix to put together wx widget and name
+config = configparser.ConfigParser()
+exurl = 'https://horriblesubs.info/shows/nekopara/'
+
+# Config Defaults
+config['DEFAULT'] = {'State': 'UW',  # UW | CW | DW
+                     'Episode': '1',
+                     'URL': 'https://goat.si',
+                     'Score': 'N\\A'}
 
 
 class addShowDialog(wx.Dialog):
@@ -11,14 +19,24 @@ class addShowDialog(wx.Dialog):
 
         sizer = self.CreateTextSizer('Add Show')
 
+        # Show name widgets
         showName = wx.TextCtrl(self, style=wx.TE_RICH)
-        showNameBut = wx.Button(self, label="Add Show")
-        # Change to url TextCtrl when database implementation
-        showNameBut.Bind(wx.EVT_BUTTON,
-                         watchList.addShow(showName.GetValue(), 0))
+        showNameText = wx.StaticText(self, label="Show's Name")
+        # Show URL widgets
+        showURL = wx.TextCtrl(self, style=wx.TE_RICH)
+        showURLText = wx.StaticText(self, label="Show's URL")
+        # Add Show But
+        addShowBut = wx.Button(self, label="Add Show")
 
         sizer.Add(showName, 0, wx.ALL | wx.EXPAND, 5)
-        sizer.Add(showNameBut, 0, wx.ALL, 5)
+        sizer.Add(showNameText, 0, wx.ALL, 5)
+        sizer.Add(showURL, 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showURLText, 0, wx.ALL, 5)
+
+        sizer.Add(addShowBut, 0, wx.ALL, 5)
+
+        # Use lamda evt to stop wx from autorunning program
+        addShowBut.Bind(wx.EVT_BUTTON, lambda evt: watchList.addShow(showName.GetValue(), showURL.GetValue(), self))
 
         self.SetSizer(sizer)
 
@@ -50,17 +68,11 @@ class Watchlist(wx.Frame):
         panel = wx.Panel(self)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        panel.SetBackgroundColour('#ffffff')
 
         midPan = wx.Panel(panel)
-        midPan.SetBackgroundColour('#000000')
-
-        testBut = wx.Button(panel, label='tetst')
-        vbox.Add(testBut, flag=wx.Right | wx.TOP, border=5)
-        testBut.Bind(wx.EVT_BUTTON, self.parseConf(self, "config.ini"))
 
         appendBut = wx.Button(midPan, label='Add Show')
-        vbox.Add(appendBut, flag=wx.RIGHT | wx.TOP, border=5)
+        vbox.Add(appendBut, flag=wx.EXPAND | wx.TOP, border=5)
 
         appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
 
@@ -76,12 +88,29 @@ class Watchlist(wx.Frame):
         testDia.Destroy()
         return True
 
-    def addShow(self, showname, url):
-        # Create new window to add show
-        # Have showname, url (maybe parse aniDB further on)
-        # Append show to config.ini
-        # Append new verticalbox to main class
-        pass
+    def addShow(self, newShowName, url, dia):
+        # Debug
+        print('Reached addShow func')
+        newShowSec = configparser.ConfigParser()
+        # Make sure config is not overwritten
+        with open('config.ini', 'r') as curFile:
+            try:
+                newShowSec.read_file(curFile)
+            except configparser.Error as err:
+                raise Exception(err)
+                return False
+
+        newShowSec['{}'.format(newShowName)] = {}
+        newShowSec[newShowName]['URL'] = '{}'.format(url)
+        newShowSec[newShowName]['State'] = 'UW'
+        # Episode required for later config
+        newShowSec[newShowName]['Episode'] = '1'
+        newShowSec[newShowName]['Score'] = 'N\\A'
+        with open('config.ini', 'w') as curFile:
+            newShowSec.write(curFile)
+            print('wrote to file')
+            if dia:
+                dia.Destroy()
 
     def checkDuplicate(self, e):
         pass
@@ -109,4 +138,5 @@ def main():
         exit()
 
 
+#if __name__ == "__main__":
 main()
