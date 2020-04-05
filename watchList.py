@@ -93,7 +93,7 @@ class Watchlist(wx.Frame):
         print('Reached addShow func')
         newShowSec = configparser.ConfigParser()
         # Make sure config is not overwritten
-        with open('config.ini', 'r') as curFile:
+        with open('config.ini', 'r', encoding="utf8") as curFile:
             try:
                 newShowSec.read_file(curFile)
             except configparser.Error as err:
@@ -106,21 +106,27 @@ class Watchlist(wx.Frame):
         # Episode required for later config
         newShowSec[newShowName]['Episode'] = '1'
         newShowSec[newShowName]['Score'] = 'N\\A'
-        with open('config.ini', 'w') as curFile:
+        with open('config.ini', 'w', errors='ignore') as curFile:
             newShowSec.write(curFile)
             print('wrote to file')
             if dia:
                 dia.Destroy()
 
-    def checkDuplicate(self, e):
+    def checkDuplicate(self, a, b):
+        if a in b:
+            return False
+        else:
+            return True
         pass
 
     def parseConf(self, e, confCur):
         """Parses through the config.ini file, finding information and
         returning it"""
-        # with open(confCur, "r") as f:
-        #    c = configparser.ConfigParser()
-        #    print(c.sections(f))
+        with open(confCur, "r") as f:
+            c = configparser.ConfigParser()
+            c.read_file(f)
+            c.sections()
+            return c
         pass
 
     def OnQuit(self, e):
@@ -129,14 +135,13 @@ class Watchlist(wx.Frame):
 
 def main():
     try:
-        japp = wx.App()
-        jex = Watchlist(None)
-        jex.Show()
-        japp.MainLoop()
+        app = wx.App()
+        ex = Watchlist(None)
+        ex.Show()
+        app.MainLoop()
     except:
         print('idk')
         exit()
 
 
-#if __name__ == "__main__":
 main()
