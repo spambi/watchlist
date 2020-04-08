@@ -102,7 +102,7 @@ class Watchlist(wx.Frame):
         print('Reached addShow func')
         newShowSec = configparser.ConfigParser()
         # Make sure config is not overwritten
-        with open('config.ini', 'r') as curFile:
+        with open('config.ini', 'r', encoding="utf8") as curFile:
             try:
                 newShowSec.read_file(curFile)
                 newShowSec.sections()
@@ -116,11 +116,12 @@ class Watchlist(wx.Frame):
         # Episode required for later config
         newShowSec[newShowName]['Episode'] = '1'
         newShowSec[newShowName]['Score'] = 'N\\A'
-        with open('config.ini', 'w') as curFile:
+        with open('config.ini', 'w', errors='ignore') as curFile:
             newShowSec.write(curFile)
             print('wrote to file')
             if dia:
                 dia.Destroy()
+
 
     def createShowBox(self, showDict, showName, iteration):
         """Will create a box of a show from the config file, and
@@ -156,6 +157,22 @@ class Watchlist(wx.Frame):
 
     def updateShowBox(self):
         """Updates ShowBox and shows them in main panel"""
+
+    def checkDuplicate(self, a, b):
+        if a in b:
+            return False
+        else:
+            return True
+        pass
+
+    def parseConf(self, e, confCur):
+        """Parses through the config.ini file, finding information and
+        returning it"""
+        with open(confCur, "r") as f:
+            c = configparser.ConfigParser()
+            c.read_file(f)
+            c.sections()
+            return c
         pass
 
     def OnQuit(self, e):
@@ -209,10 +226,10 @@ class confCtrl():
 
 
 def main():
+
     app = wx.App()
     ex = Watchlist(None)
     ex.Show()
     app.MainLoop()
-
 
 main()
