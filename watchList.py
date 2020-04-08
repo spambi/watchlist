@@ -49,11 +49,11 @@ class Watchlist(wx.Frame):
     def __init__(self, *args, **kwargs):
         super(Watchlist, self).__init__(*args, **kwargs)
 
+        self.panel = wx.Panel(self)
+        self.SetTitle("Watchlist")
+        self.InitUI()
         self.SetSize(512, 512)
         self.Center()
-        self.SetTitle("Watchlist")
-        self.panel = wx.Panel(self)
-        self.InitUI()
 
     def InitUI(self):
 
@@ -62,10 +62,10 @@ class Watchlist(wx.Frame):
         currentName = test.getShowNames(shows)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # Use this just so it doesn't have to parse twice
+        # Will retrieve shows and display them in the show sizer
         for i in range(0, len(test.getShowNames(shows))):
-            sizer.Add(self.createShowBox(shows, currentName[i], i), flag=wx.EXPAND)
-        #sizer.Add(self.createShowBox(shows, currentName[0], 0), flag=wx.EXPAND)
+            sizer.Add(self.createShowBox(shows, currentName[i], i),
+                      flag=wx.EXPAND)
 
         # Menubar
         menuBar = wx.MenuBar()
@@ -78,9 +78,6 @@ class Watchlist(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
-
-        # Layout
-        #panel = wx.Panel(self)
 
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
@@ -134,20 +131,32 @@ class Watchlist(wx.Frame):
         # CURRENT: TYPE ERROR FOR LINE BELOW FUCK THIS PIECE OF SHIT LMAO
         tempName = wx.StaticText(self.panel, label=showDict[iteration]['Name'],
                                  style=wx.ALIGN_LEFT)
-        tempURLS = wx.StaticText(self.panel, label=showDict[iteration]['URL'],
+        tempURLS = wx.StaticText(self.panel,
+                                 label=showDict[iteration]['URL'],
                                  style=wx.ALIGN_RIGHT)
-        #tempState = wx.StaticText(panel, label=showDict[iteration]['State'])
-        #tempEp = wx.StaticText(panel, label=showDict[iteration]['Episode'])
-        #tempScore = wx.StaticText(panel, label=showDict[iteration]['Score'])
+        tempState = wx.StaticText(self.panel,
+                                  label=showDict[iteration]['State'])
+        tempEp = wx.StaticText(self.panel,
+                               label=showDict[iteration]['Episode'])
+        tempScore = wx.StaticText(self.panel,
+                                 label=showDict[iteration]['Score'])
         # This adds the static text to the boxsizer
         hbox.Add(tempName, flag=wx.RIGHT | wx.EXPAND, border=8)
         hbox.Add(tempURLS, flag=wx.LEFT | wx.EXPAND, border=8)
-        #hbox.Add(tempState, flag=wx.EXPAND | wx.EXPAND, border=8)
-        #hbox.add(tempep, flag=wx.top | wx.expand, border=8)
-        #hbox.Add(tempScore, flag=wx.BOTTOM | wx.EXPAND, border=8)
+        hbox.Add(tempState, flag=wx.EXPAND | wx.RIGHT, border=8)
+        hbox.Add(tempEp, flag=wx.EXPAND | wx.RIGHT, border=8)
+        hbox.Add(tempScore, flag=wx.EXPAND | wx.RIGHT, border=8)
         # Returns the sizer
         print('returning hbox')
         return hbox
+
+    def editShow(self, showBox):
+        """Will open a dialog to edit a show """
+        pass
+
+    def updateShowBox(self):
+        """Updates ShowBox and shows them in main panel"""
+        pass
 
     def OnQuit(self, e):
         self.Close()
@@ -156,8 +165,6 @@ class Watchlist(wx.Frame):
 class confCtrl():
 
     config = configparser.ConfigParser()
-    #fr = open('config.ini', 'r')
-    #fw = open('config.ini', 'w')
 
     def __init__(self, file, **kwargs):
         # self.read_file("config.ini")
