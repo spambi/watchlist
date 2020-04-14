@@ -80,12 +80,12 @@ class Watchlist(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda evt: self.clearSizerElements(showSizer), clearBox)
         self.Bind(wx.EVT_MENU, lambda evt: self.refreshShowsGUI(showSizer), refreshShows)
 
-        appendBut = wx.Button(self.panel, label='Add Show')
-        butSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
-        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
-
+#        appendBut = wx.Button(self.panel, label='Add Show')
+#        butSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
+#        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
+#
         mainSizer.Add(showSizer)
-        mainSizer.Add(butSizer)
+#        mainSizer.Add(butSizer)
 
         self.panel.SetSizer(mainSizer)
 
@@ -145,9 +145,9 @@ class Watchlist(wx.Frame):
         # Iterate through shows and pipe them into self.createShowBox()
         self.clearSizerElements(sizer)
         for i, ele in enumerate(currentName):
-            sizer.Layout()
             sizer.Add(self.createShowBox(shows, currentName[i], i),
                       flag=wx.EXPAND)
+            sizer.Layout()
 
     def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
@@ -159,20 +159,19 @@ class Watchlist(wx.Frame):
         tempName = wx.StaticText(self.panel, label=showDict[iteration]['Name'],
                                  style=wx.ALIGN_LEFT)
         tempURLS = wx.StaticText(self.panel,
-                                 label=showDict[iteration]['URL'],
-                                 style=wx.ALIGN_RIGHT)
+                                 label=showDict[iteration]['URL'])
         tempState = wx.StaticText(self.panel,
                                   label=showDict[iteration]['State'])
         tempEp = wx.StaticText(self.panel,
                                label=showDict[iteration]['Episode'])
         tempScore = wx.StaticText(self.panel,
-                                 label=showDict[iteration]['Score'])
+                                  label=showDict[iteration]['Score'])
         # This adds the static text to the boxsizer
         hbox.Add(tempName, flag=wx.RIGHT | wx.EXPAND, border=8)
-        hbox.Add(tempURLS, flag=wx.LEFT | wx.EXPAND, border=8)
-        hbox.Add(tempState, flag=wx.EXPAND | wx.RIGHT, border=8)
-        hbox.Add(tempEp, flag=wx.EXPAND | wx.RIGHT, border=8)
-        hbox.Add(tempScore, flag=wx.EXPAND | wx.RIGHT, border=8)
+        hbox.Add(tempURLS, flag=wx.RIGHT | wx.EXPAND, border=8)
+        hbox.Add(tempState, flag=wx.RIGHT | wx.EXPAND, border=8)
+        hbox.Add(tempEp, flag=wx.RIGHT | wx.EXPAND, border=8)
+        hbox.Add(tempScore, flag=wx.RIGHT | wx.EXPAND, border=8)
         # Returns the sizer
         print('returning hbox')
         return hbox
