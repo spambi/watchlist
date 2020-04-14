@@ -138,9 +138,11 @@ class Watchlist(wx.Frame):
         shows = conf.parseConf()
         currentName = conf.getShowNames(shows)
         # Iterate through shows and pipe them into self.createShowBox()
+        self.clearElements(sizer)
         for i, ele in enumerate(currentName):
             sizer.Add(self.createShowBox(shows, currentName[i], i),
                       flag=wx.EXPAND)
+            sizer.Layout()
 
     def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
