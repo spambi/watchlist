@@ -111,6 +111,9 @@ class Watchlist(wx.Frame):
             print('wrote to file')
             if dia:
                 dia.Destroy()
+                
+    def addShowGUI(self):
+        pass
 
     def checkDuplicate(self, e):
         pass
