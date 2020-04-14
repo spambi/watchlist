@@ -56,21 +56,17 @@ class Watchlist(wx.Frame):
         self.Center()
 
     def InitUI(self):
-
-        test = confCtrl("config.ini")
-        shows = test.parseConf()
-        currentName = test.getShowNames(shows)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        # Will retrieve shows and display them in the show sizer
-        for i in range(0, len(test.getShowNames(shows))):
-            sizer.Add(self.createShowBox(shows, currentName[i], i),
-                      flag=wx.EXPAND)
+        # Sizer for show's and info
+        showSizer = wx.BoxSizer(wx.VERTICAL)
+        # Initial import of show info
+        refreshShowsGUI(tempConf=confCtrl("config.ini"), showSizer)
 
         # Menubar
         menuBar = wx.MenuBar()
         fileMenu = wx.Menu()
         appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
+        refreshShows = fileMenu.Append(wx.ID_ANY, 'Refresh Contents',
+                                       'Will refresh the show\'s contents')
         fileItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
 
         menuBar.Append(fileMenu, '&File')
@@ -78,6 +74,10 @@ class Watchlist(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
+        # Binds refresh contents to refresh the show sizer info
+        self.Bind(wx.EVT_MENU,
+                  self.refreshShowsGUI(tempConf = confCtrl("config.ini"),
+                                       showSizer)
 
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
@@ -122,7 +122,16 @@ class Watchlist(wx.Frame):
             if dia:
                 dia.Destroy()
                 
-    def addShowGUI(self):
+    def refreshShowsGUI(self, config, boxSizer):
+        """Will retrieve shows and display them in the show sizer"""
+        # Retrieve items needed for config
+        conf = config("config.ini")
+        shows = conf.parseConf()
+        currentName = conf.getShowNames(shows)
+        # Iterate through shows and pipe them into self.createShowBox()
+        for i in range(0, len(conf.getShowNames(shows))):
+            boxSizer.Add(self.createShowBox(shows, currentName[i], i),
+                         flag=wx.EXPAND)
         pass
 
 
