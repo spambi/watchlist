@@ -57,8 +57,9 @@ class Watchlist(wx.Frame):
 
     def InitUI(self):
         # Sizer for show's and info
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        butSizer = wx.BoxSizer(wx.HORIZONTAL)
         showSizer = wx.BoxSizer(wx.VERTICAL)
-        # Initial import of show info
 
         # Menubar
         menuBar = wx.MenuBar()
@@ -75,23 +76,23 @@ class Watchlist(wx.Frame):
         self.refreshShowsGUI(showSizer)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitGUI)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
-        self.Bind(wx.EVT_MENU, lambda EVT: self.clearElements(showSizer), clearBox)
-        self.Bind(wx.EVT_MENU, lambda EVT: self.refreshShowsGUI(showSizer), refreshShows)
-
-        self.vbox = wx.BoxSizer(wx.VERTICAL)
+        # lambda EVT to stop to stop wx auto running functions
+        self.Bind(wx.EVT_MENU, lambda evt: self.clearElements(showSizer), clearBox)
+        self.Bind(wx.EVT_MENU, lambda evt: self.refreshShowsGUI(showSizer), refreshShows)
 
         appendBut = wx.Button(self.panel, label='Add Show')
-        showSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
-
+        butSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
         appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
 
-        self.panel.SetSizer(showSizer)
+        mainSizer.Add(showSizer)
+        mainSizer.Add(butSizer)
+
+        self.panel.SetSizer(mainSizer)
 
     def NewShow(self, e):
         """Opens the addShowDialog class"""
         newshowDia = addShowDialog(None, -1, "Add Show", self)
         newshowDia.ShowModal()
-        newshowDia.CenterOnScreen()
         newshowDia.Destroy()
         return True
 
@@ -122,8 +123,8 @@ class Watchlist(wx.Frame):
             dia.Destroy()
 
     def clearElements(self, sizer):
-        # True for recursive
-        try:
+        # Use true in wx functinos for it to be recursive
+        try:  # If no try was here, and used twice in a row, crash GUI
             sizer.Clear(True)
             sizer.Destroy(True)
             sizer.Layout()
@@ -135,8 +136,10 @@ class Watchlist(wx.Frame):
         """Will retrieve shows and display them in the show sizer"""
         # Retrieve items needed for config
         conf = confCtrl("config.ini")
+        conf.readFile()
         shows = conf.parseConf()
         currentName = conf.getShowNames(shows)
+
         # Iterate through shows and pipe them into self.createShowBox()
         self.clearElements(sizer)
         for i, ele in enumerate(currentName):
@@ -200,9 +203,11 @@ class Watchlist(wx.Frame):
 class confCtrl():
 
     config = configparser.ConfigParser()
+    file = None
 
     def __init__(self, file, **kwargs):
         # self.read_file("config.ini")
+        self.file = file
         pass
 
     def checkDuplicate(self, e):
@@ -221,7 +226,7 @@ class confCtrl():
         parsedDics = []
 
         # Reads from specified file set in class def
-        with open("config.ini", "r", encoding="utf8") as f:
+        with open(self.file, "r", encoding="utf8") as f:
             self.config.read_file(f)
             self.config.sections()
             # Change this for more pythonic code like for loop
@@ -238,9 +243,18 @@ class confCtrl():
                 tempDic['Episode'] = self.config[sec]['Episode']
                 tempDic['Score'] = self.config[sec]['Score']
 
+                print(tempDic)
                 parsedDics.append(tempDic)
 
         return parsedDics
+
+    def readFile(self):
+        """Will read the contents of the file"""
+        testconfig = configparser.ConfigParser()
+        print('hi')
+        with open(self.file, 'r', encoding="utf8") as f:
+            testconfig.read_file(f)
+            print(testconfig)
 
 
 def main():
