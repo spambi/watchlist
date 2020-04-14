@@ -59,7 +59,6 @@ class Watchlist(wx.Frame):
         # Sizer for show's and info
         showSizer = wx.BoxSizer(wx.VERTICAL)
         # Initial import of show info
-        refreshShowsGUI(tempConf=confCtrl("config.ini"), showSizer)
 
         # Menubar
         menuBar = wx.MenuBar()
@@ -67,26 +66,25 @@ class Watchlist(wx.Frame):
         appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
         refreshShows = fileMenu.Append(wx.ID_ANY, 'Refresh Contents',
                                        'Will refresh the show\'s contents')
-        fileItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        clearBox = fileMenu.Append(wx.ID_EXIT, 'Clear', 'clears shit')
+        quitGUI = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
 
         menuBar.Append(fileMenu, '&File')
         self.SetMenuBar(menuBar)
 
-        self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
+        self.Bind(wx.EVT_MENU, self.OnQuit, quitGUI)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
-        # Binds refresh contents to refresh the show sizer info
-        self.Bind(wx.EVT_MENU,
-                  self.refreshShowsGUI(tempConf = confCtrl("config.ini"),
-                                       showSizer)
+        self.Bind(wx.EVT_MENU, self.refreshShowsGUI(showSizer), refreshShows)
+        self.Bind(wx.EVT_MENU, lambda evt: self.clearElements(showSizer), clearBox)
 
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
-        appendBut = wx.Button(self.panel, label='Add Show')
-        sizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        #appendBut = wx.Button(self.panel, label='Add Show')
+        #showSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
-        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
+        #appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
 
-        self.panel.SetSizer(sizer)
+        self.panel.SetSizer(showSizer)
 
     def NewShow(self, e):
         """Opens the addShowDialog class"""
@@ -119,23 +117,35 @@ class Watchlist(wx.Frame):
         with open('config.ini', 'w', errors='ignore') as curFile:
             newShowSec.write(curFile)
             print('wrote to file')
-            if dia:
-                dia.Destroy()
-                
-    def refreshShowsGUI(self, config, boxSizer):
+        if dia:
+            dia.Destroy()
+
+    def clearElements(self, sizer):
+        # True for recursive
+        try:
+            sizer.Clear(True)
+            sizer.Destroy(True)
+            sizer.Layout()
+            print(sizer)
+        except:
+            pass
+
+    def refreshShowsGUI(self, boxSizer):
         """Will retrieve shows and display them in the show sizer"""
         # Retrieve items needed for config
-        conf = config("config.ini")
+        conf = confCtrl("config.ini")
         shows = conf.parseConf()
         currentName = conf.getShowNames(shows)
         # Iterate through shows and pipe them into self.createShowBox()
-        for i in range(0, len(conf.getShowNames(shows))):
+        print("got here")
+        for i, ele in enumerate(currentName):
+
+        #for i in range(0, len(conf.getShowNames(shows))):
             boxSizer.Add(self.createShowBox(shows, currentName[i], i),
                          flag=wx.EXPAND)
         pass
 
-
-    def createShowBox(self, showDict, showName, iteration):
+    def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
         return it"""
         # Create box sizer
@@ -166,9 +176,6 @@ class Watchlist(wx.Frame):
     def editShow(self, showBox):
         """Will open a dialog to edit a show """
         pass
-
-    def updateShowBox(self):
-        """Updates ShowBox and shows them in main panel"""
 
     def checkDuplicate(self, a, b):
         if a in b:
@@ -243,5 +250,6 @@ def main():
     ex = Watchlist(None)
     ex.Show()
     app.MainLoop()
+
 
 main()
