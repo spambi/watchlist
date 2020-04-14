@@ -77,7 +77,7 @@ class Watchlist(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnQuit, quitGUI)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
         # lambda EVT to stop to stop wx auto running functions
-        self.Bind(wx.EVT_MENU, lambda evt: self.clearElements(showSizer), clearBox)
+        self.Bind(wx.EVT_MENU, lambda evt: self.clearSizerElements(showSizer), clearBox)
         self.Bind(wx.EVT_MENU, lambda evt: self.refreshShowsGUI(showSizer), refreshShows)
 
         appendBut = wx.Button(self.panel, label='Add Show')
@@ -110,19 +110,21 @@ class Watchlist(wx.Frame):
                 raise Exception(err)
                 return False
 
+        # Formatting of dict for config
         newShowSec['{}'.format(newShowName)] = {}
         newShowSec[newShowName]['URL'] = '{}'.format(url)
         newShowSec[newShowName]['State'] = 'UW'
-        # Episode required for later config
         newShowSec[newShowName]['Episode'] = '1'
         newShowSec[newShowName]['Score'] = 'N\\A'
+        # Open file for writing
         with open('config.ini', 'w', errors='ignore') as curFile:
             newShowSec.write(curFile)
             print('wrote to file')
+        # Check if the is still running and close it
         if dia:
             dia.Destroy()
 
-    def clearElements(self, sizer):
+    def clearSizerElements(self, sizer):
         # Use true in wx functinos for it to be recursive
         try:  # If no try was here, and used twice in a row, crash GUI
             sizer.Clear(True)
@@ -141,11 +143,11 @@ class Watchlist(wx.Frame):
         currentName = conf.getShowNames(shows)
 
         # Iterate through shows and pipe them into self.createShowBox()
-        self.clearElements(sizer)
+        self.clearSizerElements(sizer)
         for i, ele in enumerate(currentName):
+            sizer.Layout()
             sizer.Add(self.createShowBox(shows, currentName[i], i),
                       flag=wx.EXPAND)
-            sizer.Layout()
 
     def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
@@ -243,7 +245,6 @@ class confCtrl():
                 tempDic['Episode'] = self.config[sec]['Episode']
                 tempDic['Score'] = self.config[sec]['Score']
 
-                print(tempDic)
                 parsedDics.append(tempDic)
 
         return parsedDics
@@ -252,9 +253,14 @@ class confCtrl():
         """Will read the contents of the file"""
         testconfig = configparser.ConfigParser()
         print('hi')
-        with open(self.file, 'r', encoding="utf8") as f:
-            testconfig.read_file(f)
-            print(testconfig)
+        try:
+            with open(self.file, 'r', encoding="utf8") as f:
+                testconfig.read_file(f)
+                testconfig.sections()
+                print(testconfig.sections())
+        except configparser.Error as err:
+            print('[-] Something went wrong')
+            raise(err)
 
 
 def main():
