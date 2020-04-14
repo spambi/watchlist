@@ -66,23 +66,24 @@ class Watchlist(wx.Frame):
         appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
         refreshShows = fileMenu.Append(wx.ID_ANY, 'Refresh Contents',
                                        'Will refresh the show\'s contents')
-        clearBox = fileMenu.Append(wx.ID_EXIT, 'Clear', 'clears shit')
+        clearBox = fileMenu.Append(wx.ID_ANY, 'Clear', 'clears shit')
         quitGUI = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
 
         menuBar.Append(fileMenu, '&File')
         self.SetMenuBar(menuBar)
 
+        self.refreshShowsGUI(showSizer)
         self.Bind(wx.EVT_MENU, self.OnQuit, quitGUI)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
-        self.Bind(wx.EVT_MENU, self.refreshShowsGUI(showSizer), refreshShows)
-        self.Bind(wx.EVT_MENU, lambda evt: self.clearElements(showSizer), clearBox)
+        self.Bind(wx.EVT_MENU, lambda EVT: self.clearElements(showSizer), clearBox)
+        self.Bind(wx.EVT_MENU, lambda EVT: self.refreshShowsGUI(showSizer), refreshShows)
 
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
-        #appendBut = wx.Button(self.panel, label='Add Show')
-        #showSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        appendBut = wx.Button(self.panel, label='Add Show')
+        showSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
-        #appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
+        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
 
         self.panel.SetSizer(showSizer)
 
@@ -130,20 +131,16 @@ class Watchlist(wx.Frame):
         except:
             pass
 
-    def refreshShowsGUI(self, boxSizer):
+    def refreshShowsGUI(self, sizer):
         """Will retrieve shows and display them in the show sizer"""
         # Retrieve items needed for config
         conf = confCtrl("config.ini")
         shows = conf.parseConf()
         currentName = conf.getShowNames(shows)
         # Iterate through shows and pipe them into self.createShowBox()
-        print("got here")
         for i, ele in enumerate(currentName):
-
-        #for i in range(0, len(conf.getShowNames(shows))):
-            boxSizer.Add(self.createShowBox(shows, currentName[i], i),
-                         flag=wx.EXPAND)
-        pass
+            sizer.Add(self.createShowBox(shows, currentName[i], i),
+                      flag=wx.EXPAND)
 
     def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
