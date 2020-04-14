@@ -1,10 +1,10 @@
-from sys import exit
-import configparser
+#!/usr/bin/env pythonimport configparser
 import wx
+import configparser
 
 # Use matrix to put together wx widget and name
 config = configparser.ConfigParser()
-exurl = 'https://horriblesubs.info/shows/nekopara/'
+showsDicts = []
 
 # Config Defaults
 config['DEFAULT'] = {'State': 'UW',  # UW | CW | DW
@@ -35,22 +35,37 @@ class addShowDialog(wx.Dialog):
 
         sizer.Add(addShowBut, 0, wx.ALL, 5)
 
-        # Use lamda evt to stop wx from autorunning program
+        # Uses an anonymous function to stop wx from autorunning function
         addShowBut.Bind(wx.EVT_BUTTON, lambda evt: watchList.addShow(showName.GetValue(), showURL.GetValue(), self))
 
         self.SetSizer(sizer)
 
 
 class Watchlist(wx.Frame):
+    # Set class public variables here
+    vbox = wx.BoxSizer(wx.VERTICAL)
+    panel = None
+
     def __init__(self, *args, **kwargs):
         super(Watchlist, self).__init__(*args, **kwargs)
 
+        self.panel = wx.Panel(self)
+        self.SetTitle("Watchlist")
+        self.InitUI()
         self.SetSize(512, 512)
         self.Center()
 
-        self.InitUI()
-
     def InitUI(self):
+
+        test = confCtrl("config.ini")
+        shows = test.parseConf()
+        currentName = test.getShowNames(shows)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        # Will retrieve shows and display them in the show sizer
+        for i in range(0, len(test.getShowNames(shows))):
+            sizer.Add(self.createShowBox(shows, currentName[i], i),
+                      flag=wx.EXPAND)
 
         # Menubar
         menuBar = wx.MenuBar()
@@ -64,38 +79,33 @@ class Watchlist(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnQuit, fileItem)
         self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
 
-        # Layout
-        panel = wx.Panel(self)
+        self.vbox = wx.BoxSizer(wx.VERTICAL)
 
-        vbox = wx.BoxSizer(wx.VERTICAL)
-
-        midPan = wx.Panel(panel)
-
-        appendBut = wx.Button(midPan, label='Add Show')
-        vbox.Add(appendBut, flag=wx.EXPAND | wx.TOP, border=5)
+        appendBut = wx.Button(self.panel, label='Add Show')
+        sizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
         appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
 
-        vbox.Add(midPan, wx.ID_ANY, wx.EXPAND | wx.ALL, 20)
-        panel.SetSizer(vbox)
-
-        self.SetTitle("Watchlist")
+        self.panel.SetSizer(sizer)
 
     def NewShow(self, e):
-        testDia = addShowDialog(None, -1, "Add Show", self)
-        testDia.ShowModal()
-        testDia.CenterOnScreen()
-        testDia.Destroy()
+        """Opens the addShowDialog class"""
+        newshowDia = addShowDialog(None, -1, "Add Show", self)
+        newshowDia.ShowModal()
+        newshowDia.CenterOnScreen()
+        newshowDia.Destroy()
         return True
 
     def addShow(self, newShowName, url, dia):
+        """Will interact with config file and add necessary details"""
         # Debug
         print('Reached addShow func')
         newShowSec = configparser.ConfigParser()
         # Make sure config is not overwritten
-        with open('config.ini', 'r') as curFile:
+        with open('config.ini', 'r', encoding="utf8") as curFile:
             try:
                 newShowSec.read_file(curFile)
+                newShowSec.sections()
             except configparser.Error as err:
                 raise Exception(err)
                 return False
@@ -106,7 +116,7 @@ class Watchlist(wx.Frame):
         # Episode required for later config
         newShowSec[newShowName]['Episode'] = '1'
         newShowSec[newShowName]['Score'] = 'N\\A'
-        with open('config.ini', 'w') as curFile:
+        with open('config.ini', 'w', errors='ignore') as curFile:
             newShowSec.write(curFile)
             print('wrote to file')
             if dia:
@@ -115,31 +125,114 @@ class Watchlist(wx.Frame):
     def addShowGUI(self):
         pass
 
-    def checkDuplicate(self, e):
+
+    def createShowBox(self, showDict, showName, iteration):
+        """Will create a box of a show from the config file, and
+        return it"""
+        # Create box sizer
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        # Creates text from show's name dic
+        # CURRENT: TYPE ERROR FOR LINE BELOW FUCK THIS PIECE OF SHIT LMAO
+        tempName = wx.StaticText(self.panel, label=showDict[iteration]['Name'],
+                                 style=wx.ALIGN_LEFT)
+        tempURLS = wx.StaticText(self.panel,
+                                 label=showDict[iteration]['URL'],
+                                 style=wx.ALIGN_RIGHT)
+        tempState = wx.StaticText(self.panel,
+                                  label=showDict[iteration]['State'])
+        tempEp = wx.StaticText(self.panel,
+                               label=showDict[iteration]['Episode'])
+        tempScore = wx.StaticText(self.panel,
+                                 label=showDict[iteration]['Score'])
+        # This adds the static text to the boxsizer
+        hbox.Add(tempName, flag=wx.RIGHT | wx.EXPAND, border=8)
+        hbox.Add(tempURLS, flag=wx.LEFT | wx.EXPAND, border=8)
+        hbox.Add(tempState, flag=wx.EXPAND | wx.RIGHT, border=8)
+        hbox.Add(tempEp, flag=wx.EXPAND | wx.RIGHT, border=8)
+        hbox.Add(tempScore, flag=wx.EXPAND | wx.RIGHT, border=8)
+        # Returns the sizer
+        print('returning hbox')
+        return hbox
+
+    def editShow(self, showBox):
+        """Will open a dialog to edit a show """
+        pass
+
+    def updateShowBox(self):
+        """Updates ShowBox and shows them in main panel"""
+
+    def checkDuplicate(self, a, b):
+        if a in b:
+            return False
+        else:
+            return True
         pass
 
     def parseConf(self, e, confCur):
         """Parses through the config.ini file, finding information and
         returning it"""
-        # with open(confCur, "r") as f:
-        #    c = configparser.ConfigParser()
-        #    print(c.sections(f))
+        with open(confCur, "r") as f:
+            c = configparser.ConfigParser()
+            c.read_file(f)
+            c.sections()
+            return c
         pass
 
     def OnQuit(self, e):
         self.Close()
 
 
+class confCtrl():
+
+    config = configparser.ConfigParser()
+
+    def __init__(self, file, **kwargs):
+        # self.read_file("config.ini")
+        pass
+
+    def checkDuplicate(self, e):
+        pass
+
+    def getShowNames(self, showsList):
+        """Basic loop to get showname list"""
+        tempList = []
+        for show in showsList:
+            tempList.append(show['Name'])
+        return tempList
+
+    def parseConf(self):
+        """Parses through the config.ini file, finding information and
+        returning it as a dictionary"""
+        parsedDics = []
+
+        # Reads from specified file set in class def
+        with open("config.ini", "r", encoding="utf8") as f:
+            self.config.read_file(f)
+            self.config.sections()
+            # Change this for more pythonic code like for loop
+            for sec in self.config.sections():
+                tempDic = {'Name': '',
+                           'URL': '',
+                           'State': '',
+                           'Episode': '',
+                           'Score': ''}
+                tempDic['Name'] = sec
+                # Access the configs num(i) section's URL/STATE/etc.
+                tempDic['URL'] = self.config[sec]['URL']
+                tempDic['State'] = self.config[sec]['State']
+                tempDic['Episode'] = self.config[sec]['Episode']
+                tempDic['Score'] = self.config[sec]['Score']
+
+                parsedDics.append(tempDic)
+
+        return parsedDics
+
+
 def main():
-    try:
-        japp = wx.App()
-        jex = Watchlist(None)
-        jex.Show()
-        japp.MainLoop()
-    except:
-        print('idk')
-        exit()
 
+    app = wx.App()
+    ex = Watchlist(None)
+    ex.Show()
+    app.MainLoop()
 
-#if __name__ == "__main__":
 main()
