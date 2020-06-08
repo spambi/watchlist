@@ -80,12 +80,12 @@ class Watchlist(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda evt: self.clearSizerElements(showSizer), clearBox)
         self.Bind(wx.EVT_MENU, lambda evt: self.refreshShowsGUI(showSizer), refreshShows)
 
-#        appendBut = wx.Button(self.panel, label='Add Show')
-#        butSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
-#        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
-#
+        appendBut = wx.Button(self.panel, label='Add Show')
+        butSizer.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        appendBut.Bind(wx.EVT_BUTTON, self.NewShow)
+
         mainSizer.Add(showSizer)
-#        mainSizer.Add(butSizer)
+        mainSizer.Add(butSizer)
 
         self.panel.SetSizer(mainSizer)
 
@@ -129,8 +129,6 @@ class Watchlist(wx.Frame):
         try:  # If no try was here, and used twice in a row, crash GUI
             sizer.Clear(True)
             sizer.Destroy(True)
-            sizer.Layout()
-            print(sizer)
         except:
             pass
 
@@ -141,13 +139,14 @@ class Watchlist(wx.Frame):
         conf.readFile()
         shows = conf.parseConf()
         currentName = conf.getShowNames(shows)
+        self.Refresh()
 
         # Iterate through shows and pipe them into self.createShowBox()
         self.clearSizerElements(sizer)
         for i, ele in enumerate(currentName):
             sizer.Add(self.createShowBox(shows, currentName[i], i),
                       flag=wx.EXPAND)
-            sizer.Layout()
+        sizer.Layout()
 
     def createShowBox(self, showDict, showName, iteration=0):
         """Will create a box of a show from the config file, and
