@@ -26,10 +26,10 @@ class watchListGUI(wx.Frame):
         quitItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
 
         self.Bind(wx.EVT_MENU, self.quit, quitItem)
-        self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
+        self.Bind(wx.EVT_MENU, self.newShowWrapper, appendItem)
 
         appendBut = wx.Button(self.mainPanel, label="Add Show")
-        # Bind append but
+        appendBut.Bind(wx.EVT_BUTTON, self.newShowWrapper)
 
         # Add Shit
         menuBar.Append(fileMenu, '&File')
@@ -52,13 +52,11 @@ class watchListGUI(wx.Frame):
             return False
         return True
 
-    def NewShow(self, e):
+    def newShowWrapper(self, e):
         """Opens addShowDialog
         """
         newDia = addShowDialog(None, -1, "Add Show", self)
-        newDia.ShowModal()
-        newDia.CenterOnScreen()
-        newDia.Destroy()
+        newDia.Show()
         return True
 
     def quit(self):
