@@ -2,6 +2,103 @@ import wx
 import configparser
 
 
+class watchListGUI(wx.Frame):
+    def __init__(self, *args, **kwargs):
+        """Main GUI for the watchlist.
+
+        """
+        super(watchListGUI, self).__init__(*args, **kwargs)
+
+        self.conf = confCtrl("config.ini")
+        self.size = (512, 512)
+        self.Center()
+        self.InitUI()
+
+    def InitUI(self):
+        # Init Stuff
+        self.mainPanel = wx.Panel(self)
+        self.mainBox = wx.BoxSizer(wx.VERTICAL)
+        menuBar = wx.MenuBar()
+
+        # Menubar
+        fileMenu = wx.Menu()
+        appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
+        quitItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+
+        self.Bind(wx.EVT_MENU, self.quit, quitItem)
+        self.Bind(wx.EVT_MENU, self.NewShow, appendItem)
+
+        appendBut = wx.Button(self.mainPanel, label="Add Show")
+        # Bind append but
+
+        # Add Shit
+        menuBar.Append(fileMenu, '&File')
+
+        # Finish
+        self.mainPanel.SetBackgroundColour("#d8bfd8")
+        self.mainBox.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self.SetMenuBar(menuBar)
+        self.mainPanel.SetSizer(self.mainBox)
+
+    def addShow(self, newShowName, url, dia) -> bool:
+        """Add's show to config
+        """
+        print("Reached addShow func")
+        self.conf.appendShow(newShowName, url)
+        if dia:
+            dia.Destroy()
+            return True
+        else:
+            return False
+        return True
+
+    def NewShow(self, e):
+        """Opens addShowDialog
+        """
+        newDia = addShowDialog(None, -1, "Add Show", self)
+        newDia.ShowModal()
+        newDia.CenterOnScreen()
+        newDia.Destroy()
+        return True
+
+    def quit(self):
+        self.Close()
+
+
+class addShowDialog(wx.Dialog):
+    """Dialog for adding a show
+
+    """
+    def __init__(self, parent, id: int, title: str, watchList):
+        wx.Dialog.__init__(self, parent, id, title)
+
+        sizer = self.CreateTextSizer('Add Show')
+
+        # Show name widgets
+        showName = wx.TextCtrl(self, style=wx.TE_RICH)
+        showNameText = wx.StaticText(self, label="Show's Name")
+        # Show URL widgets
+        showURL = wx.TextCtrl(self, style=wx.TE_RICH)
+        showURLText = wx.StaticText(self, label="Show's URL")
+        # Add Show But
+        addShowBut = wx.Button(self, label="Add Show")
+
+        sizer.Add(showName, 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showNameText, 0, wx.ALL, 5)
+        sizer.Add(showURL, 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showURLText, 0, wx.ALL, 5)
+
+        sizer.Add(addShowBut, 0, wx.ALL, 5)
+
+        # Uses an anonymous function to stop wx from autorunning function
+        addShowBut.Bind(wx.EVT_BUTTON,
+                        lambda evt:
+                        watchList.addShow(showName.GetValue(),
+                                          showURL.GetValue(),
+                                          self))
+        self.SetSizer(sizer)
+
+
 class confCtrl(configparser.ConfigParser):
     """Config Management
 
@@ -66,24 +163,12 @@ class confCtrl(configparser.ConfigParser):
         self.writeFile()
 
 
-# Holy shit I'm dumb could've just made it a child class FUCK ME
-class watchListGUI(wx.Frame):
-    def __init__(self, *args, **kwargs):
-        """Main GUI for the watchlist.
-
-        """
-        super(watchListGUI, self).__init__(*args, **kwargs)
-
-        self.conf = confCtrl("config.ini")
-        self.SetTitle("Watchlist")
-        self.SetSizer(512, 512)
-        self.Center()
-        self.InitUI()
-
-    def InitUI(self):
-        pass
-
 
 hi = confCtrl()
 
 print(hi.currConf)
+
+app = wx.App()
+ex = watchListGUI(None, title="AHAHA")
+ex.Show()
+app.MainLoop()
