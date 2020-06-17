@@ -19,26 +19,66 @@ class watchListGUI(wx.Frame):
         self.mainPanel = wx.Panel(self)
         self.mainBox = wx.BoxSizer(wx.VERTICAL)
         menuBar = wx.MenuBar()
+        #self.boxInit()
 
         # Menubar
         fileMenu = wx.Menu()
         appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
+        refreshItem = fileMenu.Append(wx.ID_ANY, 'Refresh Config', 'Refreshes Config')
         quitItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
 
         self.Bind(wx.EVT_MENU, self.quit, quitItem)
         self.Bind(wx.EVT_MENU, self.newShowWrapper, appendItem)
+        self.Bind(wx.EVT_MENU, self.boxInit(), refreshItem)
 
         appendBut = wx.Button(self.mainPanel, label="Add Show")
         appendBut.Bind(wx.EVT_BUTTON, self.newShowWrapper)
 
         # Add Shit
         menuBar.Append(fileMenu, '&File')
+        self.mainBox.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
         # Finish
         self.mainPanel.SetBackgroundColour("#d8bfd8")
-        self.mainBox.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
         self.SetMenuBar(menuBar)
         self.mainPanel.SetSizer(self.mainBox)
+
+    def boxInit(self):
+        """Adds info to self.mainBox"""
+        showsList = self.conf.parseConf()
+        for s in showsList:
+            tempS = self.createBox(s)
+            self.mainBox.Add(tempS)
+            self.Refresh()
+        pass
+
+    def createBox(self, show: dict) -> wx.GridBagSizer:
+        sizer = wx.FlexGridSizer(rows=1, cols=5, vgap=5, hgap=5)
+        # Probably a better way to do this with dictionary
+        nameText = wx.StaticText(self.mainPanel, label=show['Name'])
+        urlText = wx.StaticText(self.mainPanel, label=show['URL'])
+        stateText = wx.StaticText(self.mainPanel, label=show['State'])
+        scoreText = wx.StaticText(self.mainPanel, label=show['Score'])
+        epText = wx.StaticText(self.mainPanel, label=show['Episode'])
+
+        sizer.AddMany([(nameText),
+                       (urlText),
+                       (stateText),
+                       (scoreText),
+                       (epText)])
+
+        # sizer.Add(nameText, pos=(0, 0),
+        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
+        # sizer.Add(urlText, pos=(100, 50),
+        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
+        # sizer.Add(stateText, pos=(200, 75),
+        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
+        # sizer.Add(scoreText, pos=(300, 100),
+        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
+        # sizer.Add(epText, pos=(400, 125),
+        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
+
+        return sizer
 
     def addShow(self, newShowName, url, dia) -> bool:
         """Add's show to config
@@ -59,7 +99,7 @@ class watchListGUI(wx.Frame):
         newDia.Show()
         return True
 
-    def quit(self):
+    def quit(self, e):
         self.Close()
 
 
@@ -70,7 +110,7 @@ class addShowDialog(wx.Dialog):
     def __init__(self, parent, id: int, title: str, watchList):
         wx.Dialog.__init__(self, parent, id, title)
 
-        sizer = self.CreateTextSizer('Add Show')
+        sizer = self.CreateTextSizer("")
 
         # Show name widgets
         showName = wx.TextCtrl(self, style=wx.TE_RICH)
@@ -81,10 +121,10 @@ class addShowDialog(wx.Dialog):
         # Add Show But
         addShowBut = wx.Button(self, label="Add Show")
 
-        sizer.Add(showName, 0, wx.ALL | wx.EXPAND, 5)
         sizer.Add(showNameText, 0, wx.ALL, 5)
-        sizer.Add(showURL, 0, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(showName, 0, wx.ALL | wx.EXPAND, 5)
         sizer.Add(showURLText, 0, wx.ALL, 5)
+        sizer.Add(showURL, 0, wx.ALL | wx.EXPAND, 5)
 
         sizer.Add(addShowBut, 0, wx.ALL, 5)
 
@@ -157,14 +197,11 @@ class confCtrl(configparser.ConfigParser):
         self[name]['State'] = 'UW'
         self[name]['Episode'] = '0'
         self[name]['Score'] = 'N\\A'
-        # Create a func later that writes to file
-        self.writeFile()
+        if self.writeFile():
+            return True
+        else:
+            return False
 
-
-
-hi = confCtrl()
-
-print(hi.currConf)
 
 app = wx.App()
 ex = watchListGUI(None, title="AHAHA")
