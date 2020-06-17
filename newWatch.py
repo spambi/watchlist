@@ -18,18 +18,21 @@ class watchListGUI(wx.Frame):
         # Init Stuff
         self.mainPanel = wx.Panel(self)
         self.mainBox = wx.BoxSizer(wx.VERTICAL)
+        self.infoBox = wx.BoxSizer(wx.VERTICAL)
         menuBar = wx.MenuBar()
-        #self.boxInit()
 
         # Menubar
         fileMenu = wx.Menu()
-        appendItem = fileMenu.Append(wx.ID_ANY, 'Add Show', 'Appends Show')
-        refreshItem = fileMenu.Append(wx.ID_ANY, 'Refresh Config', 'Refreshes Config')
-        quitItem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
+        appendItem = fileMenu.Append(wx.ID_ANY,
+                                     'Add Show', 'Appends Show')
+        updateItem = fileMenu.Append(wx.ID_ANY,
+                                     'Updates Config', 'Updates')
+        quitItem = fileMenu.Append(wx.ID_EXIT,
+                                   'Quit', 'Quit application')
 
         self.Bind(wx.EVT_MENU, self.quit, quitItem)
         self.Bind(wx.EVT_MENU, self.newShowWrapper, appendItem)
-        self.Bind(wx.EVT_MENU, self.boxInit(), refreshItem)
+        self.Bind(wx.EVT_MENU, lambda EVT: self.boxUpdate(), updateItem)
 
         appendBut = wx.Button(self.mainPanel, label="Add Show")
         appendBut.Bind(wx.EVT_BUTTON, self.newShowWrapper)
@@ -39,18 +42,30 @@ class watchListGUI(wx.Frame):
         self.mainBox.Add(appendBut, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
         # Finish
+        self.boxInit()
+        self.mainBox.Add(self.infoBox)
         self.mainPanel.SetBackgroundColour("#d8bfd8")
         self.SetMenuBar(menuBar)
         self.mainPanel.SetSizer(self.mainBox)
+        self.mainPanel.Layout()
 
     def boxInit(self):
         """Adds info to self.mainBox"""
         showsList = self.conf.parseConf()
         for s in showsList:
             tempS = self.createBox(s)
-            self.mainBox.Add(tempS)
-            self.Refresh()
+            self.infoBox.Add(tempS)
+        self.mainPanel.Layout()
         pass
+
+    def boxUpdate(self):
+        """IT WORKS"""
+        infoItems = self.infoBox.GetChildren()
+        for i, hi in enumerate(infoItems):
+            hi.DeleteWindows()
+            self.infoBox.Layout()
+            self.Fit()
+        self.boxInit()
 
     def createBox(self, show: dict) -> wx.GridBagSizer:
         sizer = wx.FlexGridSizer(rows=1, cols=5, vgap=5, hgap=5)
@@ -66,18 +81,6 @@ class watchListGUI(wx.Frame):
                        (stateText),
                        (scoreText),
                        (epText)])
-
-        # sizer.Add(nameText, pos=(0, 0),
-        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
-        # sizer.Add(urlText, pos=(100, 50),
-        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
-        # sizer.Add(stateText, pos=(200, 75),
-        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
-        # sizer.Add(scoreText, pos=(300, 100),
-        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
-        # sizer.Add(epText, pos=(400, 125),
-        #           flag=wx.TOP | wx.LEFT | wx.BOTTOM, border=5)
-
         return sizer
 
     def addShow(self, newShowName, url, dia) -> bool:
@@ -86,6 +89,7 @@ class watchListGUI(wx.Frame):
         print("Reached addShow func")
         self.conf.appendShow(newShowName, url)
         if dia:
+            self.boxUpdate()
             dia.Destroy()
             return True
         else:
