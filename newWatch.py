@@ -1,5 +1,6 @@
 import wx
 import configparser
+from functools import partial
 
 
 class watchListGUI(wx.Frame):
@@ -9,10 +10,13 @@ class watchListGUI(wx.Frame):
         """
         super(watchListGUI, self).__init__(*args, **kwargs)
 
+        self.bgColor = "#d8bfd8"
+
         self.conf = confCtrl("config.ini")
         self.size = (512, 512)
         self.Center()
         self.InitUI()
+        self.Fit()
 
     def InitUI(self):
         # Init Stuff
@@ -20,9 +24,9 @@ class watchListGUI(wx.Frame):
         self.mainBox = wx.BoxSizer(wx.VERTICAL)
         self.infoBox = wx.BoxSizer(wx.VERTICAL)
         menuBar = wx.MenuBar()
+        fileMenu = wx.Menu()
 
         # Menubar
-        fileMenu = wx.Menu()
         appendItem = fileMenu.Append(wx.ID_ANY,
                                      'Add Show', 'Appends Show')
         updateItem = fileMenu.Append(wx.ID_ANY,
@@ -44,49 +48,58 @@ class watchListGUI(wx.Frame):
         # Finish
         self.boxInit()
         self.mainBox.Add(self.infoBox)
-        self.mainPanel.SetBackgroundColour("#d8bfd8")
         self.SetMenuBar(menuBar)
+        self.SetBackgroundColour(self.bgColor)
+        self.mainPanel.SetBackgroundColour(self.bgColor)
         self.mainPanel.SetSizer(self.mainBox)
         self.mainPanel.Layout()
 
     def boxInit(self):
         """Adds info to self.mainBox"""
         showsList = self.conf.parseConf()
+        self.mainPanel.Hide()
         for s in showsList:
             tempS = self.createBox(s)
             self.infoBox.Add(tempS)
+        self.mainPanel.Show()
         self.mainPanel.Layout()
-        pass
 
     def boxUpdate(self):
         """IT WORKS"""
         infoItems = self.infoBox.GetChildren()
         for i, hi in enumerate(infoItems):
             hi.DeleteWindows()
-            self.infoBox.Layout()
-            self.Fit()
-        self.boxInit()
+        self.infoBox.Layout()
+        # self.Fit()
 
     def createBox(self, show: dict) -> wx.GridBagSizer:
-        sizer = wx.FlexGridSizer(rows=1, cols=5, vgap=5, hgap=5)
+        sizer = wx.FlexGridSizer(rows=1, cols=6, vgap=5, hgap=5)
         # Probably a better way to do this with dictionary
+
         nameText = wx.StaticText(self.mainPanel, label=show['Name'])
         urlText = wx.StaticText(self.mainPanel, label=show['URL'])
         stateText = wx.StaticText(self.mainPanel, label=show['State'])
         scoreText = wx.StaticText(self.mainPanel, label=show['Score'])
         epText = wx.StaticText(self.mainPanel, label=show['Episode'])
+        editBut = wx.Button(self.mainPanel, label='Edit')
+        editBut.Bind(wx.EVT_BUTTON, lambda event, temp=show['Name']: self.editShowWrapper(show['Name']))
 
-        sizer.AddMany([(nameText),
-                       (urlText),
-                       (stateText),
-                       (scoreText),
-                       (epText)])
+        sizer.AddMany([(nameText, 5),
+                       (urlText, 5),
+                       (stateText, 5),
+                       (scoreText, 5),
+                       (epText, 5)])
+        sizer.Add(editBut)
         return sizer
+
+    def editShowWrapper(self, name: str):
+        newDia = editShowDialog(None, -1, "Boruto", self.conf, self)
+        newDia.Show()
+        # self.conf.editShow(name)  # Fuck that's stupid as shit
 
     def addShow(self, newShowName, url, dia) -> bool:
         """Add's show to config
         """
-        print("Reached addShow func")
         self.conf.appendShow(newShowName, url)
         if dia:
             self.boxUpdate()
@@ -105,6 +118,58 @@ class watchListGUI(wx.Frame):
 
     def quit(self, e):
         self.Close()
+
+
+class editShowDialog(wx.Dialog):
+    def __init__(self, parent, id: int, showName: str,
+                 conf: configparser.ConfigParser, mainGui: wx.Frame):
+        """Dialog for editing a show
+
+        """
+        wx.Dialog.__init__(self, parent, id, 'Editting {}'.format(showName))
+        self.showName = showName
+        self.conf = conf
+        self.mainGui = mainGui
+
+        sizer = self.CreateTextSizer("")
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.name = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.name.AppendText(self.showName)
+        self.showURL = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showURL.AppendText(self.conf[self.showName]['URL'])
+        self.showState = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showState.AppendText(self.conf[self.showName]['State'])
+        self.showEP = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showEP.AppendText(self.conf[self.showName]['Episode'])
+
+        commitEdit = wx.Button(self, label="Commit Edits")
+
+        hbox1.Add(self.name)
+        hbox1.Add(self.showURL)
+        hbox2.Add(self.showState)
+        hbox2.Add(self.showEP)
+
+        vbox.AddMany([(hbox1),
+                      (hbox2)])
+
+        vbox.Add(commitEdit)
+
+        sizer.Add(vbox)
+
+        commitEdit.Bind(wx.EVT_BUTTON, self.setEdit)
+
+        self.SetSizer(sizer)
+
+    def setEdit(self, e):
+        self.conf[self.showName]['URL'] = self.showURL.GetValue()
+        self.conf[self.showName]['State'] = self.showState.GetValue()
+        self.conf[self.showName]['Episode'] = self.showEP.GetValue()
+        self.conf.writeFile()
+        self.Destroy()
 
 
 class addShowDialog(wx.Dialog):
@@ -195,6 +260,8 @@ class confCtrl(configparser.ConfigParser):
     def appendShow(self, name: str, url=None) -> bool:
         """Adds show to config
         """
+        if not name:
+            return False
         self.readFile()
         self['{}'.format(name)] = {}
         self[name]['URL'] = str(url)
@@ -205,6 +272,18 @@ class confCtrl(configparser.ConfigParser):
             return True
         else:
             return False
+
+    def editShow(self, name: str) -> bool:
+        """
+        Alright mate, the outline is NOT to parse through the conf,
+        check if the name, matches anything, if it does,
+        then you change that dic's info
+        not that hard hopefully
+        """
+        self.readFile()
+
+        if name in self:
+            print(name)
 
 
 app = wx.App()
