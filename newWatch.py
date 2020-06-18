@@ -95,7 +95,7 @@ class watchListGUI(wx.Frame):
         return sizer
 
     def editShowWrapper(self, name: str):
-        newDia = editShowDialog(None, -1, "Boruto", self.conf, self)
+        newDia = editShowDialog(None, -1, name, self.conf, self)
         newDia.Show()
         # self.conf.editShow(name)  # Fuck that's stupid as shit
 
@@ -174,6 +174,7 @@ class editShowDialog(wx.Dialog):
         self.conf[self.showName]['Episode'] = self.showEP.GetValue()
         self.conf.writeFile()
         self.Destroy()
+        self.mainGui.boxUpdate()
 
 
 class addShowDialog(wx.Dialog):
