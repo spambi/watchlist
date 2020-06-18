@@ -1,6 +1,5 @@
 import wx
 import configparser
-from functools import partial
 
 
 class watchListGUI(wx.Frame):
@@ -23,6 +22,8 @@ class watchListGUI(wx.Frame):
         self.mainPanel = wx.Panel(self)
         self.mainBox = wx.BoxSizer(wx.VERTICAL)
         self.infoBox = wx.BoxSizer(wx.VERTICAL)
+        self.SetBackgroundColour(self.bgColor)
+        self.mainPanel.SetBackgroundColour(self.bgColor)
         menuBar = wx.MenuBar()
         fileMenu = wx.Menu()
 
@@ -49,8 +50,6 @@ class watchListGUI(wx.Frame):
         self.boxInit()
         self.mainBox.Add(self.infoBox)
         self.SetMenuBar(menuBar)
-        self.SetBackgroundColour(self.bgColor)
-        self.mainPanel.SetBackgroundColour(self.bgColor)
         self.mainPanel.SetSizer(self.mainBox)
         self.mainPanel.Layout()
 
@@ -69,6 +68,7 @@ class watchListGUI(wx.Frame):
         infoItems = self.infoBox.GetChildren()
         for i, hi in enumerate(infoItems):
             hi.DeleteWindows()
+        self.boxInit()
         self.infoBox.Layout()
         # self.Fit()
 
@@ -82,7 +82,9 @@ class watchListGUI(wx.Frame):
         scoreText = wx.StaticText(self.mainPanel, label=show['Score'])
         epText = wx.StaticText(self.mainPanel, label=show['Episode'])
         editBut = wx.Button(self.mainPanel, label='Edit')
-        editBut.Bind(wx.EVT_BUTTON, lambda event, temp=show['Name']: self.editShowWrapper(show['Name']))
+        editBut.Bind(wx.EVT_BUTTON,
+                     lambda event, temp=show['Name']:
+                     self.editShowWrapper(show['Name']))
 
         sizer.AddMany([(nameText, 5),
                        (urlText, 5),
@@ -139,14 +141,18 @@ class editShowDialog(wx.Dialog):
 
         self.name = wx.TextCtrl(self, style=wx.TE_RICH)
         self.name.AppendText(self.showName)
+
         self.showURL = wx.TextCtrl(self, style=wx.TE_RICH)
         self.showURL.AppendText(self.conf[self.showName]['URL'])
+
         self.showState = wx.TextCtrl(self, style=wx.TE_RICH)
         self.showState.AppendText(self.conf[self.showName]['State'])
+
         self.showEP = wx.TextCtrl(self, style=wx.TE_RICH)
         self.showEP.AppendText(self.conf[self.showName]['Episode'])
 
         commitEdit = wx.Button(self, label="Commit Edits")
+        commitEdit.Bind(wx.EVT_BUTTON, self.setEdit)
 
         hbox1.Add(self.name)
         hbox1.Add(self.showURL)
@@ -154,13 +160,11 @@ class editShowDialog(wx.Dialog):
         hbox2.Add(self.showEP)
 
         vbox.AddMany([(hbox1),
-                      (hbox2)])
+                      (hbox2),
+                      (commitEdit)])
 
-        vbox.Add(commitEdit)
-
+        # vbox.Add(commitEdit)
         sizer.Add(vbox)
-
-        commitEdit.Bind(wx.EVT_BUTTON, self.setEdit)
 
         self.SetSizer(sizer)
 
@@ -272,18 +276,6 @@ class confCtrl(configparser.ConfigParser):
             return True
         else:
             return False
-
-    def editShow(self, name: str) -> bool:
-        """
-        Alright mate, the outline is NOT to parse through the conf,
-        check if the name, matches anything, if it does,
-        then you change that dic's info
-        not that hard hopefully
-        """
-        self.readFile()
-
-        if name in self:
-            print(name)
 
 
 app = wx.App()
