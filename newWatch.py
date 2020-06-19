@@ -73,7 +73,7 @@ class watchListGUI(wx.Frame):
         # self.Fit()
 
     def createBox(self, show: dict) -> wx.GridBagSizer:
-        sizer = wx.FlexGridSizer(rows=1, cols=6, vgap=5, hgap=5)
+        sizer = wx.FlexGridSizer(rows=1, cols=7, vgap=5, hgap=5)
         # Probably a better way to do this with dictionary
 
         nameText = wx.StaticText(self.mainPanel, label=show['Name'])
@@ -81,6 +81,11 @@ class watchListGUI(wx.Frame):
         stateText = wx.StaticText(self.mainPanel, label=show['State'])
         scoreText = wx.StaticText(self.mainPanel, label=show['Score'])
         epText = wx.StaticText(self.mainPanel, label=show['Episode'])
+        deleteBut = wx.Button(self.mainPanel, label='Del')
+        deleteBut.Bind(wx.EVT_BUTTON,
+                       lambda event, temp=show['Name']:
+                       self.deleteShowWrapper(show['Name']))
+
         editBut = wx.Button(self.mainPanel, label='Edit')
         editBut.Bind(wx.EVT_BUTTON,
                      lambda event, temp=show['Name']:
@@ -90,9 +95,14 @@ class watchListGUI(wx.Frame):
                        (urlText, 5),
                        (stateText, 5),
                        (scoreText, 5),
-                       (epText, 5)])
-        sizer.Add(editBut)
+                       (epText, 5),
+                       (editBut, 5),
+                       (deleteBut, 5)])
         return sizer
+
+    def deleteShowWrapper(self, name: str):
+        self.conf.deleteShow(name)
+        self.boxUpdate()
 
     def editShowWrapper(self, name: str):
         newDia = editShowDialog(None, -1, name, self.conf, self)
@@ -107,8 +117,6 @@ class watchListGUI(wx.Frame):
             self.boxUpdate()
             dia.Destroy()
             return True
-        else:
-            return False
         return True
 
     def newShowWrapper(self, e):
@@ -261,6 +269,11 @@ class confCtrl(configparser.ConfigParser):
             parsedDics.append(tempDic)
 
         return parsedDics
+
+    def deleteShow(self, name: str):
+        self.remove_section(name)
+        self.writeFile()
+
 
     def appendShow(self, name: str, url=None) -> bool:
         """Adds show to config
