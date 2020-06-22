@@ -7,15 +7,17 @@ class watchListGUI(wx.Frame):
         """Main GUI for the watchlist.
 
         """
-        super(watchListGUI, self).__init__(*args, **kwargs)
+        super(watchListGUI, self).__init__(*args, **kwargs, size=(1024, 1024))
 
         self.bgColor = "#d8bfd8"
+        self.font = wx.Font(16, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
+        self.Log = LogWindow(self, "Watch List Log")
 
         self.conf = confCtrl("config.ini")
-        self.size = (512, 512)
+        self.size = (1024, 1024)
         self.Center()
         self.InitUI()
-        self.Fit()
+        # self.Fit()
 
     def InitUI(self):
         # Init Stuff
@@ -32,12 +34,15 @@ class watchListGUI(wx.Frame):
                                      'Add Show', 'Appends Show')
         updateItem = fileMenu.Append(wx.ID_ANY,
                                      'Updates Config', 'Updates')
+        logItem = fileMenu.Append(wx.ID_ANY,
+                                  'Show Log', 'Inits the Log Window')
         quitItem = fileMenu.Append(wx.ID_EXIT,
                                    'Quit', 'Quit application')
 
         self.Bind(wx.EVT_MENU, self.quit, quitItem)
         self.Bind(wx.EVT_MENU, self.newShowWrapper, appendItem)
         self.Bind(wx.EVT_MENU, lambda EVT: self.boxUpdate(), updateItem)
+        self.Bind(wx.EVT_MENU, self.initLog, logItem)
 
         appendBut = wx.Button(self.mainPanel, label="Add Show")
         appendBut.Bind(wx.EVT_BUTTON, self.newShowWrapper)
@@ -48,7 +53,7 @@ class watchListGUI(wx.Frame):
 
         # Finish
         self.boxInit()
-        self.mainBox.Add(self.infoBox)
+        self.mainBox.Add(self.infoBox, flag=wx.EXPAND | wx.ALL, border=5)
         self.SetMenuBar(menuBar)
         self.mainPanel.SetSizer(self.mainBox)
         self.mainPanel.Layout()
@@ -64,7 +69,7 @@ class watchListGUI(wx.Frame):
         self.mainPanel.Layout()
 
     def boxUpdate(self):
-        """IT WORKS"""
+        """Will delete all info text and re-render them"""
         infoItems = self.infoBox.GetChildren()
         for i, hi in enumerate(infoItems):
             hi.DeleteWindows()
@@ -73,14 +78,20 @@ class watchListGUI(wx.Frame):
         # self.Fit()
 
     def createBox(self, show: dict) -> wx.GridBagSizer:
-        sizer = wx.FlexGridSizer(rows=1, cols=7, vgap=5, hgap=5)
+        """Will create a FlexGridSizer and return it"""
+        sizer = wx.GridBagSizer(2, 3)
         # Probably a better way to do this with dictionary
 
         nameText = wx.StaticText(self.mainPanel, label=show['Name'])
+        nameText.SetFont(self.font)
         urlText = wx.StaticText(self.mainPanel, label=show['URL'])
+        urlText.SetFont(self.font)
         stateText = wx.StaticText(self.mainPanel, label=show['State'])
+        stateText.SetFont(self.font)
         scoreText = wx.StaticText(self.mainPanel, label=show['Score'])
-        epText = wx.StaticText(self.mainPanel, label=show['Episode'])
+        scoreText.SetFont(self.font)
+        epText = wx.StaticText(self.mainPanel, label="E{}".format(show['Episode']))
+        epText.SetFont(self.font)
         deleteBut = wx.Button(self.mainPanel, label='Del')
         deleteBut.Bind(wx.EVT_BUTTON,
                        lambda event, temp=show['Name']:
@@ -91,17 +102,25 @@ class watchListGUI(wx.Frame):
                      lambda event, temp=show['Name']:
                      self.editShowWrapper(show['Name']))
 
-        sizer.AddMany([(nameText, 5),
-                       (urlText, 5),
-                       (stateText, 5),
-                       (scoreText, 5),
-                       (epText, 5),
-                       (editBut, 5),
-                       (deleteBut, 5)])
+        sizer.Add(nameText, pos=(0, 0),
+                  flag=wx.TOP | wx.RIGHT, border=5)
+
+        if show['URL']:
+            sizer.Add(urlText, pos=(1, 0),
+                      flag=wx.TOP | wx.LEFT)
+
+        sizer.Add(stateText, pos=(0, 3),
+                  flag=wx.TOP | wx.LEFT)
+        # sizer.Add(scoreText, pos=(0, 3))
+        sizer.Add(epText, pos=(1, 3))
+        sizer.Add(editBut, pos=(2, 0), flag=wx.EXPAND | wx.RIGHT)
+        sizer.Add(deleteBut, pos=(2, 3), flag=wx.EXPAND | wx.LEFT)
+
         return sizer
 
     def deleteShowWrapper(self, name: str):
         self.conf.deleteShow(name)
+        self.log("Deleted show: {}".format(name))
         self.boxUpdate()
 
     def editShowWrapper(self, name: str):
@@ -126,6 +145,12 @@ class watchListGUI(wx.Frame):
         newDia.Show()
         return True
 
+    def log(self, text: str):
+        self.Log.log(text)
+
+    def initLog(self, e):
+        self.Log.Show()
+
     def quit(self, e):
         self.Close()
 
@@ -137,6 +162,7 @@ class editShowDialog(wx.Dialog):
 
         """
         wx.Dialog.__init__(self, parent, id, 'Editting {}'.format(showName))
+        self.Centre()
         self.showName = showName
         self.conf = conf
         self.mainGui = mainGui
@@ -147,16 +173,16 @@ class editShowDialog(wx.Dialog):
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.name = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.name = wx.TextCtrl(self, style=wx.TE_RICH | wx.EXPAND)
         self.name.AppendText(self.showName)
 
-        self.showURL = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showURL = wx.TextCtrl(self, style=wx.TE_RICH | wx.EXPAND)
         self.showURL.AppendText(self.conf[self.showName]['URL'])
 
-        self.showState = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showState = wx.TextCtrl(self, style=wx.TE_RICH | wx.EXPAND)
         self.showState.AppendText(self.conf[self.showName]['State'])
 
-        self.showEP = wx.TextCtrl(self, style=wx.TE_RICH)
+        self.showEP = wx.TextCtrl(self, style=wx.TE_RICH | wx.EXPAND)
         self.showEP.AppendText(self.conf[self.showName]['Episode'])
 
         commitEdit = wx.Button(self, label="Commit Edits")
@@ -181,6 +207,14 @@ class editShowDialog(wx.Dialog):
         self.conf[self.showName]['State'] = self.showState.GetValue()
         self.conf[self.showName]['Episode'] = self.showEP.GetValue()
         self.conf.writeFile()
+        self.mainGui.Log.log(
+            """Edited: {}:
+{}
+{}
+{}""".format(self.conf[self.showName],
+             self.conf[self.showName]['URL'],
+             self.conf[self.showName]['State'],
+             self.conf[self.showName]['Episode']))
         self.Destroy()
         self.mainGui.boxUpdate()
 
@@ -217,6 +251,31 @@ class addShowDialog(wx.Dialog):
                                           showURL.GetValue(),
                                           self))
         self.SetSizer(sizer)
+
+
+class LogWindow(wx.Dialog):
+    """A basic dialog for logging out current processes and info
+    """
+    def __init__(self, parent, title):
+        super(LogWindow, self).__init__(parent, title=title)
+        self.InitUI()
+
+    def InitUI(self):
+        """Init's UI for LogWindow Class"""
+        panel = wx.Panel(self)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.logInfo = wx.TextCtrl(panel,
+                                   style=wx.TE_READONLY |
+                                   wx.TE_MULTILINE |
+                                   wx.HSCROLL)
+
+        hbox.Add(self.logInfo, proportion=1, flag=wx.EXPAND)
+
+        panel.SetSizer(hbox)
+
+    def log(self, info: str):
+        self.logInfo.AppendText("{}\n".format(info))
 
 
 class confCtrl(configparser.ConfigParser):
@@ -273,7 +332,6 @@ class confCtrl(configparser.ConfigParser):
     def deleteShow(self, name: str):
         self.remove_section(name)
         self.writeFile()
-
 
     def appendShow(self, name: str, url=None) -> bool:
         """Adds show to config
